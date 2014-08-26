@@ -25,7 +25,7 @@ fi
 #
 # init
 #
-DISPLAY=localhost:$1
+DISPLAY=:$1
 NAME=$2			# it should be possible to derive $NAME from $JOB_NAME
 VG=jenkins01
 LV=/dev/${VG}/$NAME
@@ -137,7 +137,7 @@ bootstrap_system() {
 	sudo qemu-img create -f raw $LV ${DISKSIZE_IN_GB}G
 	echo "Doing g-i installation test for $NAME now."
 	# qemu related variables (incl kernel+initrd) - display first, as we grep for this in the process list
-	QEMU_OPTS="-display vnc=$DISPLAY -no-shutdown -enable-kvm -cpu host -pidfile $QEMU_PIDFILE"
+	QEMU_OPTS="-nographic -vnc $DISPLAY,share=ignore -no-shutdown -enable-kvm -cpu host -pidfile $QEMU_PIDFILE"
 	CONVERTOPTS="-gravity center -background $VIDEOBGCOLOR -extent $VIDEOSIZE"
 	if [ -n "$IMAGE" ] ; then
 		QEMU_OPTS="$QEMU_OPTS -cdrom $IMAGE -boot d"
@@ -247,7 +247,7 @@ boot_system() {
 	cd $WORKSPACE
 	echo "Booting system installed with g-i installation test for $NAME."
 	# qemu related variables (incl kernel+initrd) - display first, as we grep for this in the process list
-	QEMU_OPTS="-display vnc=$DISPLAY -no-shutdown -enable-kvm -cpu host -pidfile $QEMU_PIDFILE"
+	QEMU_OPTS="-nographic -vnc $DISPLAY,share=ignore -no-shutdown -enable-kvm -cpu host -pidfile $QEMU_PIDFILE"
 	echo "Checking $LV:"
 	FILE=$(sudo file -Ls $LV)
 	if [ $(echo $FILE | grep -E '(x86 boot sector|DOS/MBR boot sector)' | wc -l) -eq 0 ] ; then
