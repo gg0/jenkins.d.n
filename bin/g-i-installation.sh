@@ -40,6 +40,7 @@ else
 	KERNEL=linux
 	INITRD=initrd.gz
 fi
+QEMU_PIDFILE=$(mktemp --suffix=.pid)
 
 #
 # define workspace + results
@@ -87,10 +88,10 @@ cleanup_all() {
 	#
 	# kill qemu
 	#
-	sudo kill -9 $(ps fax | grep [q]emu-system | grep "vnc=$DISPLAY " 2>/dev/null | awk '{print $1}') || true
+	sudo pkill -9 -F $QEMU_PIDFILE || true
 	sleep 0.3s
 	sudo lvremove -f $LV
-	rm $QEMU_LAUNCHER
+	rm $QEMU_LAUNCHER $QEMU_PIDFILE
 	#
 	# cleanup image mount
 	#
@@ -136,7 +137,7 @@ bootstrap_system() {
 	sudo qemu-img create -f raw $LV ${DISKSIZE_IN_GB}G
 	echo "Doing g-i installation test for $NAME now."
 	# qemu related variables (incl kernel+initrd) - display first, as we grep for this in the process list
-	QEMU_OPTS="-display vnc=$DISPLAY -no-shutdown -enable-kvm -cpu host"
+	QEMU_OPTS="-display vnc=$DISPLAY -no-shutdown -enable-kvm -cpu host -pidfile $QEMU_PIDFILE"
 	CONVERTOPTS="-gravity center -background $VIDEOBGCOLOR -extent $VIDEOSIZE"
 	if [ -n "$IMAGE" ] ; then
 		QEMU_OPTS="$QEMU_OPTS -cdrom $IMAGE -boot d"
@@ -246,7 +247,7 @@ boot_system() {
 	cd $WORKSPACE
 	echo "Booting system installed with g-i installation test for $NAME."
 	# qemu related variables (incl kernel+initrd) - display first, as we grep for this in the process list
-	QEMU_OPTS="-display vnc=$DISPLAY -no-shutdown -enable-kvm -cpu host"
+	QEMU_OPTS="-display vnc=$DISPLAY -no-shutdown -enable-kvm -cpu host -pidfile $QEMU_PIDFILE"
 	echo "Checking $LV:"
 	FILE=$(sudo file -Ls $LV)
 	if [ $(echo $FILE | grep -E '(x86 boot sector|DOS/MBR boot sector)' | wc -l) -eq 0 ] ; then
@@ -864,7 +865,7 @@ monitor_system() {
 		#
 		# break if qemu-system has finished
 		#
-		if ! ps fax | grep [q]emu-system | grep vnc=$DISPLAY >/dev/null; then
+		if ! sudo pgrep -F $QEMU_PIDFILE >/dev/null; then
 			touch $RESULTS/qemu_quit
 			break
 		fi
@@ -1127,7 +1128,7 @@ case $NAME in
 	*)		#
 			# kill qemu and image
 			#
-			sudo kill -9 $(ps fax | grep [q]emu-system | grep "vnc=$DISPLAY " 2>/dev/null | awk '{print $1}') || true
+			sudo pkill -9 -F $QEMU_PIDFILE || true
 			if [ ! -z "$IMAGE" ] ; then
 				sudo umount -l $IMAGE_MNT || true
 			fi
