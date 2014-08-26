@@ -40,6 +40,7 @@ else
 	KERNEL=linux
 	INITRD=initrd.gz
 fi
+QEMU_PIDFILE=$(mktemp --suffix=.pid)
 
 echo "Testing $NAME with $URL"
 echo
@@ -109,7 +110,7 @@ cleanup_all() {
 	#
 	# kill qemu
 	#
-	sudo kill -9 $(ps fax | grep [q]emu-system | grep "vnc=$DISPLAY " 2>/dev/null | awk '{print $1}') || true
+	sudo pkill -9 -F $QEMU_PIDFILE || true
 	sleep 0.3s
 	#
 	# save logs if there are any
@@ -132,7 +133,7 @@ cleanup_all() {
 		*) 	sudo lvremove -f $LV
 		;;
 	esac
-	rm -f $QEMU_LAUNCHER
+	rm -f $QEMU_LAUNCHER $QEMU_PIDFILE
 	#
 	# cleanup image mount
 	#
@@ -186,7 +187,7 @@ bootstrap_system() {
 	sudo qemu-img create -f raw $LV ${DISKSIZE_IN_GB}G
 	echo "Doing g-i installation test for $NAME now."
 	# qemu related variables (incl kernel+initrd) - display first, as we grep for this in the process list
-	QEMU_OPTS="-display vnc=$DISPLAY"
+	QEMU_OPTS="-display vnc=$DISPLAY -pidfile $QEMU_PIDFILE"
 	case $NAME in
 		# nested KVM runs gnumach horribly slowly
 		*_hurd*)	;;
@@ -328,7 +329,7 @@ boot_system() {
 	cd $WORKSPACE
 	echo "Booting system installed with g-i installation test for $NAME."
 	# qemu related variables (incl kernel+initrd) - display first, as we grep for this in the process list
-	QEMU_OPTS="-display vnc=$DISPLAY"
+	QEMU_OPTS="-display vnc=$DISPLAY -pidfile $QEMU_PIDFILE"
 	case $NAME in
 		# nested KVM runs gnumach horribly slowly
 		*_hurd*)	;;
@@ -986,7 +987,7 @@ monitor_system() {
 		#
 		# break if qemu-system has finished
 		#
-		if ! ps fax | grep [q]emu-system | grep vnc=$DISPLAY >/dev/null; then
+		if ! sudo pgrep -F $QEMU_PIDFILE >/dev/null; then
 			touch $RESULTS/qemu_quit
 			break
 		fi
@@ -1255,7 +1256,7 @@ case $NAME in
 	*)		#
 			# kill qemu and image
 			#
-			sudo kill -9 $(ps fax | grep [q]emu-system | grep "vnc=$DISPLAY " 2>/dev/null | awk '{print $1}') || true
+			sudo pkill -9 -F $QEMU_PIDFILE || true
 			if [ ! -z "$IMAGE" ] ; then
 				sudo umount -l $IMAGE_MNT || true
 			fi
