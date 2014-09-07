@@ -44,6 +44,12 @@ else
 	if [ -z "$SCHROOT_BASE" ]; then
 		export SCHROOT_BASE=/schroots
 	fi
+
+	# throw-away logical volumes options
+	export VGNAME=jenkins01
+	export MNTFSTYPE=ext4
+	export MNTOPTS=nobarrier,commit=300,delalloc,data=writeback,relatime
+
 	# use these settings in the scripts in the (s)chroots too
 	export SCRIPT_HEADER="#!/bin/bash
 	set -e

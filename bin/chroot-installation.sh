@@ -26,6 +26,19 @@ export CHROOT_TARGET=$(mktemp -d -p /chroots/ chroot-installation-$1.XXXXXXXXX)
 export TMPFILE=$(mktemp -u)
 export CTMPFILE=$CHROOT_TARGET/$TMPFILE
 
+#
+# mount LV
+#
+LVNAME=$(basename $CHROOT_TARGET)
+LVPATH=/dev/${VGNAME}/$LVNAME
+LVSIZE=10
+echo "Creating throw-away logical volume with ${LVSIZE} GiB now."
+sudo lvcreate -L${LVSIZE}G -n $LVNAME $VGNAME
+echo "Creating filesystem on $LVPATH now."
+sudo mkfs -t $FSTYPE $LVPATH
+echo "Mounting logical volume $LVNAME under $CHROOT_TARGET now."
+sudo mount -o $MNTOPTS $LVPATH $CHROOT_TARGET
+
 cleanup_all() {
 	# test if $CHROOT_TARGET starts with /chroots/
 	if [ "${CHROOT_TARGET:0:9}" != "/chroots/" ] ; then

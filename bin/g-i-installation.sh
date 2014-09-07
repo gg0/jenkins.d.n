@@ -27,8 +27,7 @@ fi
 #
 DISPLAY=localhost:$1
 NAME=$2			# it should be possible to derive $NAME from $JOB_NAME
-VG=jenkins01
-LV=/dev/${VG}/$NAME
+LV=/dev/${VGNAME}/$NAME
 DISKSIZE_IN_GB=$3
 URL=$4
 # $5 and $6 are used below for language setting
