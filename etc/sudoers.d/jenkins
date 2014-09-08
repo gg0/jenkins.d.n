@@ -23,6 +23,7 @@ jenkins ALL=  \
 	/usr/bin/qemu-img *, \
 	/sbin/lvcreate *, /sbin/lvremove *, \
 	/bin/mkdir -p /media/*, \
+	/bin/mkdir -p /chroots/*, \
 	/usr/bin/guestmount *, \
 	/bin/cp -r /media/*, \
 	/bin/chown -R jenkins\:jenkins /var/lib/jenkins/jobs/*,\
