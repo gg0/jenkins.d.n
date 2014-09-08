@@ -51,7 +51,7 @@ cleanup_all() {
 
 execute_ctmpfile() {
 	chmod +x $CTMPFILE
-	sudo chroot $CHROOT_TARGET $TMPFILE
+	sudo chroot $CHROOT_TARGET $TMPFILE & wait $!
 	rm $CTMPFILE
 }
 
@@ -100,8 +100,8 @@ bootstrap() {
 	mkdir -p "$CHROOT_TARGET/etc/dpkg/dpkg.cfg.d"
 	echo force-unsafe-io > "$CHROOT_TARGET/etc/dpkg/dpkg.cfg.d/02dpkg-unsafe-io"
 
-	echo "Bootstraping $1 into $CHROOT_TARGET now."
-	sudo debootstrap $1 $CHROOT_TARGET $MIRROR
+	echo "Bootstrapping $1 into $CHROOT_TARGET now."
+	sudo debootstrap $1 $CHROOT_TARGET $MIRROR & wait $!
 	prepare_bootstrap $1
 	execute_ctmpfile 
 }

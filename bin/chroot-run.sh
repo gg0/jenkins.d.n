@@ -59,8 +59,9 @@ bootstrap() {
 	mkdir -p "$CHROOT_TARGET/etc/dpkg/dpkg.cfg.d"
 	echo force-unsafe-io > "$CHROOT_TARGET/etc/dpkg/dpkg.cfg.d/02dpkg-unsafe-io"
 
-	echo "Bootstraping $DISTRO into $CHROOT_TARGET now."
-	if ! sudo debootstrap $DISTRO $CHROOT_TARGET $MIRROR; then
+	echo "Bootstrapping $DISTRO into $CHROOT_TARGET now."
+	sudo debootstrap $DISTRO $CHROOT_TARGET $MIRROR & pid=$!
+	if ! wait $pid; then
 		SLEEPTIME=1800
 		echo "debootstrap failed, slowing down, sleeping $SLEEPTIME now..."
 		sleep $SLEEPTIME
@@ -80,7 +81,7 @@ apt-get update
 EOF
 
 	chmod +x $CHROOT_TARGET/tmp/chroot-prepare
-	sudo chroot $CHROOT_TARGET /tmp/chroot-prepare
+	sudo chroot $CHROOT_TARGET /tmp/chroot-prepare & wait $!
 }
 
 cleanup() {
@@ -122,7 +123,7 @@ EOF
 	fi
 	echo "$*" >> $CHROOT_TARGET/tmp/chroot-testrun
 	chmod +x $CHROOT_TARGET/tmp/chroot-testrun
-	sudo chroot $CHROOT_TARGET /tmp/chroot-testrun
+	sudo chroot $CHROOT_TARGET /tmp/chroot-testrun & wait $!
 
 }
 
