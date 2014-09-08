@@ -92,13 +92,21 @@ cleanup() {
 	fi
 
 	if [ -d $CHROOT_TARGET/proc ]; then
-		sudo umount -l $CHROOT_TARGET/proc || fuser -mv $CHROOT_TARGET/proc
+		sudo umount $CHROOT_TARGET/proc || fuser -mv $CHROOT_TARGET/proc
 	fi
 	if [ -d $CHROOT_TARGET/testrun ]; then
-		sudo umount -l $CHROOT_TARGET/testrun || fuser -mv $CHROOT_TARGET/testrun
+		sudo umount $CHROOT_TARGET/testrun || fuser -mv $CHROOT_TARGET/testrun
 	fi
 	if [ -d $CHROOT_TARGET ]; then
-		sudo rm -rf --one-file-system $CHROOT_TARGET || fuser -mv $CHROOT_TARGET
+		# by aborting job (TERM), fuser -mvMk kills all child processes.
+		# Manual cleanup on exit doesn't run it, it would try to TERM
+		# this script hence (re-)trigger cleanup.
+		if [ "$1" != "EXIT" ]; then
+			sudo fuser -mvMk $CHROOT_TARGET
+		fi
+		sudo umount $CHROOT_TARGET
+		sudo lvremove -f $LVPATH
+		sudo rmdir $CHROOT_TARGET
 	fi
 }
 trap cleanup INT TERM EXIT
@@ -129,4 +137,4 @@ EOF
 
 bootstrap
 run "$@"
-cleanup
+cleanup EXIT

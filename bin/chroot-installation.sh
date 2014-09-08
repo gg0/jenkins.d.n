@@ -45,8 +45,18 @@ cleanup_all() {
 		echo "HALP. CHROOT_TARGET = $CHROOT_TARGET"
 		exit 1
 	fi
-	sudo umount -l $CHROOT_TARGET/proc || fuser -mv $CHROOT_TARGET/proc
-	sudo rm -rf --one-file-system $CHROOT_TARGET || fuser -mv $CHROOT_TARGET
+	sudo umount $CHROOT_TARGET/proc || fuser -mv $CHROOT_TARGET/proc
+	if [ -d $CHROOT_TARGET ]; then
+		# by aborting job (TERM), fuser -mvMk kills all child processes.
+		# Manual cleanup on exit doesn't run it, it would try to TERM
+		# this script hence (re-)trigger cleanup.
+		if [ "$1" != "EXIT" ]; then
+			sudo fuser -mvMk $CHROOT_TARGET
+		fi
+		sudo umount $CHROOT_TARGET
+		sudo lvremove -f $LVPATH
+		sudo rmdir $CHROOT_TARGET
+	fi
 }
 
 execute_ctmpfile() {
@@ -183,6 +193,6 @@ if [ "$3" != "" ] ; then
 	esac
 fi
 
-cleanup_all
+cleanup_all EXIT
 trap - INT TERM EXIT
 

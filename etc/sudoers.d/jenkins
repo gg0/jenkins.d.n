@@ -8,13 +8,16 @@ jenkins ALL=  \
 	/usr/sbin/chroot /media/*, \
 	/bin/ls -la /media/*, \
 	/bin/rm -rf --one-file-system /chroots/*, \
+	/bin/rmdir /chroots/*, \
 	/bin/rm -rf --one-file-system /schroots/*, \
 	/bin/mv /chroots/* /schroots/*, \
 	/bin/mv /schroots/* /schroots/*, \
-	/bin/umount -l /chroots/*, \
+	/bin/umount /chroots/*, \
 	/bin/umount -l /media/*, \
+	/bin/fuser -mvMk /chroots/*, \
 	/bin/mount -o loop*, \
 	/bin/mount --bind *, \
+	/bin/mount -o * /dev/jenkins* /chroots/*, \
 	/usr/bin/du *, \
 	/bin/kill -9 *, \
 	/usr/bin/file *, \
@@ -22,6 +25,7 @@ jenkins ALL=  \
 	/usr/bin/qemu-system-x86_64 *, \
 	/usr/bin/qemu-img *, \
 	/sbin/lvcreate *, /sbin/lvremove *, \
+	/sbin/mkfs -t * /dev/jenkins*, \
 	/bin/mkdir -p /media/*, \
 	/bin/mkdir -p /chroots/*, \
 	/usr/bin/guestmount *, \
