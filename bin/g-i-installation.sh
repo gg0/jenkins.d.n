@@ -53,7 +53,9 @@ if [ -z "$WORKSPACE" ] ; then
 	WORKSPACE=$(pwd)
 fi
 RESULTS=$WORKSPACE/results
-mkdir -p $RESULTS
+LOGS=$RESULTS/log
+mkdir -p $LOGS
+QEMU_SERIAL_OUT=${LOGS}/serial-out.log
 GOCR=$(mktemp)
 
 #
@@ -187,6 +189,7 @@ bootstrap_system() {
 	echo "Doing g-i installation test for $NAME now."
 	# qemu related variables (incl kernel+initrd) - display first, as we grep for this in the process list
 	QEMU_OPTS="-display vnc=$DISPLAY"
+	QEMU_OPTS="$QEMU_OPTS -serial file:${QEMU_SERIAL_OUT}"
 	case $NAME in
 		# nested KVM runs gnumach horribly slowly
 		*_hurd*)	;;
@@ -241,6 +244,9 @@ bootstrap_system() {
 	INST_VIDEO="video=vesa:ywrap,mtrr vga=788"
 	EXTRA_APPEND=""
 	case $NAME in
+		*_sid_daily_hurd*)
+			EXTRA_APPEND="mirror/suite=sid console=com0"
+			;;
 		*_sid_daily*)
 			EXTRA_APPEND="mirror/suite=sid"
 			;;
@@ -334,6 +340,7 @@ boot_system() {
 	echo "Booting system installed with g-i installation test for $NAME."
 	# qemu related variables (incl kernel+initrd) - display first, as we grep for this in the process list
 	QEMU_OPTS="-display vnc=$DISPLAY"
+	QEMU_OPTS="$QEMU_OPTS -serial file:${QEMU_SERIAL_OUT}"
 	case $NAME in
 		# nested KVM runs gnumach horribly slowly
 		*_hurd*)	;;
